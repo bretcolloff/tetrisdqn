@@ -1,4 +1,4 @@
-from tetrisgym import Direction, TetrisGym
+from tetrisgym import Move, TetrisGym
 import os
 import time
 import random
@@ -19,15 +19,17 @@ while gym.game_over is False:
         if dir == 0:
             gym.update()
         elif dir == 1:
-            gym.update(action=Direction.Left)
+            gym.update(action=Move.Left)
         elif dir == 2:
-            gym.update(action=Direction.Right)
+            gym.update(action=Move.Right)
     else:
-        move = input("l, r, empty")
+        move = input("l, r, a, empty")
         if move == "l":
-            gym.update(action=Direction.Left)
+            gym.update(action=Move.Left)
         elif move == "r":
-            gym.update(action=Direction.Right)
+            gym.update(action=Move.Right)
+        elif move == "a":
+            gym.update(action=Move.Rotate)
         else:
             gym.update()
     gym.render()

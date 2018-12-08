@@ -8,47 +8,115 @@ class Move(Enum):
     Down = 2
     Rotate = 3
 
+#['I', 'J', 'L', 'O', 'S', 'T', 'Z']
+piece_positions_map = {}
+piece_positions_map["I"] = [
+    [[1, 1, 1, 1], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]], # Pos 1
+    [[0, 0, 1, 0], [0, 0, 1, 0], [0, 0, 1, 0], [0, 0, 1, 0]]  # Pos 2
+]
+piece_positions_map["J"] = [
+    [[1, 0, 0], [1, 1, 1], [0, 0, 0]],
+    [[1, 1, 0], [1, 0, 0], [1, 0, 0]],
+    [[1, 1, 1], [0, 0, 1], [0, 0, 0]],
+    [[0, 1, 0], [0, 1, 0], [1, 1, 0]],
+]
+piece_positions_map["L"] = [
+    [[0, 0, 1], [1, 1, 1], [0, 0, 0]],
+    [[1, 0, 0], [1, 0, 0], [1, 1, 0]],
+    [[1, 1, 1], [1, 0, 0], [0, 0, 0]],
+    [[1, 1, 0], [0, 1, 0], [0, 1, 0]],
+]
+piece_positions_map["O"] = [
+    [[0, 0, 0, 0], [0, 1, 1, 0], [0, 1, 1, 0], [0, 0, 0, 0]] # Pos 1
+]
+piece_positions_map["S"] = [
+    [[0, 1, 1], [1, 1, 0], [0, 0, 0]],
+    [[1, 0, 0], [1, 1, 0], [0, 1, 0]]
+]
+piece_positions_map["T"] = [
+    [[0, 1, 0], [1, 1, 1], [0, 0, 0]],
+    [[1, 0, 0], [1, 1, 0], [1, 0, 0]],
+    [[1, 1, 1], [0, 1, 0], [0, 0, 0]],
+    [[0, 1, 0], [1, 1, 0], [0, 1, 0]],
+]
+piece_positions_map["Z"] = [
+    [[1, 1, 0], [0, 1, 1], [0, 0, 0]],
+    [[0, 1, 0], [1, 1, 0], [1, 0, 0]],
+]
+
+# Start positions
+piece_corner_map = {}
+piece_corner_map["I"] = (0, 0)
+piece_corner_map["J"] = (0, 0)
+piece_corner_map["L"] = (0, 0)
+piece_corner_map["O"] = (0, 0)
+piece_corner_map["S"] = (0, 0)
+piece_corner_map["T"] = (0, 0)
+piece_corner_map["Z"] = (0, 0)
+
+
 class Piece:
     """ Defines a single Tetris piece. """
     def __init__(self, type):
         self.type = type
-        self.positions = self.init_position()
+        self.init_position()
 
     def init_position(self):
         """ Sets the initial piece position after it's been generated. """
-
-        # Starting from the top left, assuming 0, 0.
-        if self.type is 'I':
-            return [(1, 3), (1, 4), (1, 5), (1, 6)]
-        elif self.type is 'J':
-            return [(0, 3), (1, 3), (1, 4), (1, 5)]
-        elif self.type is 'L':
-            return [(0, 5), (1, 3), (1, 4), (1, 5)]
-        elif self.type is 'O':
-            return [(0, 4), (0, 5), (1, 4), (1, 5)]
-        elif self.type is 'S':
-            return [(0, 4), (0, 5), (1, 3), (1, 4)]
-        elif self.type is 'T':
-            return [(0, 4), (1, 3), (1, 4), (1, 5)]
-        elif self.type is 'Z':
-            return [(0, 3), (0, 4), (1, 4), (1, 5)]
-        else:
-            raise Exception("{} is not a real piece type.".format(self.type))
+        self.states = piece_positions_map[self.type]
+        self.state = 0
+        self.state_corner_x, self.state_corner_y = (0, 0) # We need to set a starting point for these.
+        return
 
     def shifted(self, direction):
         """ Shift the piece in a direction, 0 is left, right is 1, down is 2 """
         new_positions = []
         if direction == Move.Left:
-            for y, x in self.positions:
+            for y, x in self.get_position():
                 new_positions.append((y, x - 1))
         elif direction == Move.Right:
-            for y, x in self.positions:
+            for y, x in self.get_position():
                 new_positions.append((y, x + 1))
         elif direction == Move.Down:
-            for y, x in self.positions:
+            for y, x in self.get_position():
                 new_positions.append((y + 1, x))
+        elif direction == Move.Rotate:
+            starting_state = self.state
+            self.state = self.get_next_state()
+            for y, x in self.get_position():
+                new_positions.append((y, x))
+            self.state = starting_state
 
         return new_positions
+
+    def shift(self, direction):
+        if direction == Move.Left:
+            self.state_corner_x -= 1
+        elif direction == Move.Right:
+            self.state_corner_x += 1
+        elif direction == Move.Down:
+            self.state_corner_y += 1
+        elif direction == Move.Rotate:
+            self.state = self.get_next_state()
+
+    def get_next_state(self):
+        new_state = self.state + 1
+        if new_state < len(self.states):
+            return new_state
+        else:
+            return 0
+
+    def get_position(self):
+        self.state_shape = self.states[self.state]
+        pos = []
+
+        for i in range(len(self.state_shape)):
+            row = self.state_shape[i]
+            for j in range(len(row)):
+                block = row[j]
+                if block == 1:
+                    pos.append((self.state_corner_y + i, self.state_corner_x + j))
+        return pos
 
 
 class TetrisGym:
@@ -111,8 +179,7 @@ class TetrisGym:
         if action is not None:
             result = self.evalulate_piece_move(action)
             if result == 0:
-                new_pos = self.piece.shifted(action)
-                self.piece.positions = new_pos
+                self.piece.shift(action)
             # Move the piece down one.
             # Check to see if it's gone down too far.
             # Do we need to generate a new piece?
@@ -123,8 +190,7 @@ class TetrisGym:
         result = self.evalulate_piece_move(move)
         # When a row gets deleted we might have some issues with the rendering, we need to make sure we move the piece down too.
         if result == 0:
-            new_pos = self.piece.shifted(move)
-            self.piece.positions = new_pos
+            self.piece.shift(move)
             self.draw_piece()
         if result == 2:
             self.draw_piece(2)
@@ -142,7 +208,7 @@ class TetrisGym:
     def draw_piece(self, blocktype=1):
         """ We'll want to 'undraw' the piece to move it. We also might want to make it permanent.
             Set the piece to 0 to blank it, 1 to draw it active, 2 to draw it permanent. """
-        for block in self.piece.positions:
+        for block in self.piece.get_position():
             y, x = block
             if self.board[y][x] == 2:
                 print ("!")
@@ -164,6 +230,3 @@ class TetrisGym:
                 line = line + piece
             print(line)
         print ("Step {} - Score {}".format(self.steps, self.score))
-
-
-
