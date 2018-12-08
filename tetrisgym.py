@@ -45,13 +45,13 @@ piece_positions_map["Z"] = [
 
 # Start positions
 piece_corner_map = {}
-piece_corner_map["I"] = (0, 0)
-piece_corner_map["J"] = (0, 0)
-piece_corner_map["L"] = (0, 0)
-piece_corner_map["O"] = (0, 0)
-piece_corner_map["S"] = (0, 0)
-piece_corner_map["T"] = (0, 0)
-piece_corner_map["Z"] = (0, 0)
+piece_corner_map["I"] = (0, 3)
+piece_corner_map["J"] = (0, 3)
+piece_corner_map["L"] = (0, 3)
+piece_corner_map["O"] = (0, 3)
+piece_corner_map["S"] = (0, 3)
+piece_corner_map["T"] = (0, 3)
+piece_corner_map["Z"] = (0, 3)
 
 
 class Piece:
@@ -138,6 +138,7 @@ class TetrisGym:
         """ Set up for a new iteration of the game. """
         self.board = np.zeros((self.height, self.width))
         self.score = 0
+        return self.board
 
     def choose_piece(self):
         """ Decide which piece the player is going to get next. """
@@ -175,6 +176,7 @@ class TetrisGym:
         return 0
 
     def update(self, action=None):
+        #next_state, reward, done, _ = gym.update(action)
         self.remove_active_piece()
 
         if action is not None:
@@ -189,17 +191,19 @@ class TetrisGym:
 
         move = Move.Down
         result = self.evalulate_piece_move(move)
+        reward = 0
         if result == 0:
             self.piece.shift(move)
             self.draw_piece()
         if result == 2:
             self.draw_piece(2)
-            self.evaluate_board()
+            reward = self.evaluate_board()
             self.piece = Piece(self.choose_piece())
         if result == 3:
             self.game_over = True
 
         self.steps = self.steps + 1
+        return self.board, reward, self.game_over
 
     def evaluate_board(self):
         completed_lines = []
@@ -225,12 +229,13 @@ class TetrisGym:
         empty_rows = np.zeros((num_completed, self.width))
         self.board = np.concatenate((empty_rows, self.board), axis=0)
 
+        score = 0
         if num_completed == 4:
-            self.score += 800
+            score = 800
         else:
-            self.score += num_completed * 100
-
-
+            score = num_completed * 100
+        self.score += score
+        return score
 
     def remove_active_piece(self):
         for i in range(len(self.board)):
