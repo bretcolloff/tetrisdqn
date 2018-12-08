@@ -8,11 +8,10 @@ class Move(Enum):
     Down = 2
     Rotate = 3
 
-#['I', 'J', 'L', 'O', 'S', 'T', 'Z']
 piece_positions_map = {}
 piece_positions_map["I"] = [
-    [[1, 1, 1, 1], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]], # Pos 1
-    [[0, 0, 1, 0], [0, 0, 1, 0], [0, 0, 1, 0], [0, 0, 1, 0]]  # Pos 2
+    [[1, 1, 1, 1], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
+    [[0, 0, 1, 0], [0, 0, 1, 0], [0, 0, 1, 0], [0, 0, 1, 0]]
 ]
 piece_positions_map["J"] = [
     [[1, 0, 0], [1, 1, 1], [0, 0, 0]],
@@ -169,6 +168,8 @@ class TetrisGym:
             elif y >= self.height:
                 return 2
             # Check to see if we've intersected with another block.
+            elif self.board[y][x] == 2 and y < 4:
+                return 3
             elif self.board[y][x] == 2:
                 return 2
         return 0
@@ -188,15 +189,48 @@ class TetrisGym:
 
         move = Move.Down
         result = self.evalulate_piece_move(move)
-        # When a row gets deleted we might have some issues with the rendering, we need to make sure we move the piece down too.
         if result == 0:
             self.piece.shift(move)
             self.draw_piece()
         if result == 2:
             self.draw_piece(2)
+            self.evaluate_board()
             self.piece = Piece(self.choose_piece())
+        if result == 3:
+            self.game_over = True
 
         self.steps = self.steps + 1
+
+    def evaluate_board(self):
+        completed_lines = []
+        for i in range(len(self.board)):
+            row = self.board[i]
+
+            # Check to see if complete.
+            complete = True
+            for j in row:
+                if j == 0:
+                    complete = False
+                    break
+
+            if complete:
+                completed_lines.append(i)
+
+        num_completed = len(completed_lines)
+        # Delete them bottom up or it's going to wreck the board.
+        for line in reversed(completed_lines):
+            self.board = np.delete(self.board, (line), axis=0)
+
+        # Add all the lines back.
+        empty_rows = np.zeros((num_completed, self.width))
+        self.board = np.concatenate((empty_rows, self.board), axis=0)
+
+        if num_completed == 4:
+            self.score += 800
+        else:
+            self.score += num_completed * 100
+
+
 
     def remove_active_piece(self):
         for i in range(len(self.board)):
@@ -220,13 +254,15 @@ class TetrisGym:
             for block in row:
                 piece = ""
                 if block == 0:
-                    piece = "_"
+                    piece = "[_]"
                 elif block == 1:
-                    piece = "O"
+                    piece = "[X]"
                 elif block == 2:
-                    piece = "#"
+                    piece = "[#]"
                 else:
                     raise Exception("{} is an invalid piece type.".format(block))
                 line = line + piece
             print(line)
-        print ("Step {} - Score {}".format(self.steps, self.score))
+        print ("Step {} - Score {} - Shape - {}".format(self.steps, self.score, self.piece.type))
+        if self.game_over:
+            print ("GAME OVER")

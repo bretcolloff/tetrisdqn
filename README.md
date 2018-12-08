@@ -14,3 +14,9 @@ We can expand this out again later.
 
 08/12/18 - 7PM
 Added a way to test it by hand from the console, we've got left and right working, need to do rotation and scoring. Haven't made this particularly easy to do the rotations.
+
+08/12/18 - 8PM
+Rewritten the piece management, rotations work. Need to set the start position for the corner of the piece's space, and add the block removal and failure cases.
+
+08/12/18 - 9PM
+Tetris gym seems to operate as expected.

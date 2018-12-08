@@ -11,11 +11,12 @@ manual = True
 gym = TetrisGym()
 
 while gym.game_over is False:
-    #cls()
+    if not manual:
+        cls()
 
     if not manual:
         # Do some random movement tests so we can check exents.
-        dir = random.randint(0, 2)
+        dir = 0#random.randint(0, 2)
         if dir == 0:
             gym.update()
         elif dir == 1:
@@ -34,5 +35,5 @@ while gym.game_over is False:
             gym.update()
     gym.render()
 
-    if not manual:
-        time.sleep(1)
+    #if not manual:
+    #    time.sleep(1)
