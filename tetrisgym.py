@@ -2,10 +2,11 @@ import numpy as np
 import random
 from enum import Enum
 
-class Direction(Enum):
+class Move(Enum):
     Left = 0
     Right = 1
     Down = 2
+    Rotate = 3
 
 class Piece:
     """ Defines a single Tetris piece. """
@@ -37,21 +38,17 @@ class Piece:
     def shifted(self, direction):
         """ Shift the piece in a direction, 0 is left, right is 1, down is 2 """
         new_positions = []
-        if direction == Direction.Left:
+        if direction == Move.Left:
             for y, x in self.positions:
                 new_positions.append((y, x - 1))
-        elif direction == Direction.Right:
+        elif direction == Move.Right:
             for y, x in self.positions:
                 new_positions.append((y, x + 1))
-        elif direction == Direction.Down:
+        elif direction == Move.Down:
             for y, x in self.positions:
                 new_positions.append((y + 1, x))
-        return new_positions
 
-    def rotated(self):
-        new_positions = []
-        if self.type == 'O':
-            new_positions = self.positions
+        return new_positions
 
 
 class TetrisGym:
@@ -80,7 +77,7 @@ class TetrisGym:
         piece_index = random.randint(0, len(self.pieces) - 1)
         return self.pieces[piece_index]
 
-    def evalulate_piece_move(self, direction=Direction.Down):
+    def evalulate_piece_move(self, direction=Move.Down):
         """ Evaluate the piece direction.
             0 = Left
             1 = Right
@@ -122,8 +119,9 @@ class TetrisGym:
             # Do we need to delete any rows?
             pass
 
-        move = Direction.Down
+        move = Move.Down
         result = self.evalulate_piece_move(move)
+        # When a row gets deleted we might have some issues with the rendering, we need to make sure we move the piece down too.
         if result == 0:
             new_pos = self.piece.shifted(move)
             self.piece.positions = new_pos
@@ -131,7 +129,6 @@ class TetrisGym:
         if result == 2:
             self.draw_piece(2)
             self.piece = Piece(self.choose_piece())
-
 
         self.steps = self.steps + 1
 
