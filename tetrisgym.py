@@ -48,6 +48,11 @@ class Piece:
                 new_positions.append((y + 1, x))
         return new_positions
 
+    def rotated(self):
+        new_positions = []
+        if self.type == 'O':
+            new_positions = self.positions
+
 
 class TetrisGym:
     """ Defines the gym environment for the agent to learn to play Tetris in. """
@@ -98,7 +103,7 @@ class TetrisGym:
             # Check to see if we've gone too far down.
             elif y >= self.height:
                 return 2
-            # Check to see if we've intersected with a block lower down.
+            # Check to see if we've intersected with another block.
             elif self.board[y][x] == 2:
                 return 2
         return 0
@@ -106,7 +111,11 @@ class TetrisGym:
     def update(self, action=None):
         self.remove_active_piece()
 
-        if action is None:
+        if action is not None:
+            result = self.evalulate_piece_move(action)
+            if result == 0:
+                new_pos = self.piece.shifted(action)
+                self.piece.positions = new_pos
             # Move the piece down one.
             # Check to see if it's gone down too far.
             # Do we need to generate a new piece?
