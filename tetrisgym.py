@@ -197,7 +197,7 @@ class TetrisGym:
             self.draw_piece()
         if result == 2:
             self.draw_piece(2)
-            reward = self.evaluate_board()
+            reward = self.evaluate_board(move)
             self.piece = Piece(self.choose_piece())
         if result == 3:
             self.game_over = True
@@ -205,7 +205,7 @@ class TetrisGym:
         self.steps = self.steps + 1
         return self.board, reward, self.game_over
 
-    def evaluate_board(self):
+    def evaluate_board(self, action):
         completed_lines = []
         for i in range(len(self.board)):
             row = self.board[i]
@@ -221,6 +221,9 @@ class TetrisGym:
                 completed_lines.append(i)
 
         num_completed = len(completed_lines)
+        if num_completed > 4:
+            num_completed = 4
+
         # Delete them bottom up or it's going to wreck the board.
         for line in reversed(completed_lines):
             self.board = np.delete(self.board, (line), axis=0)
@@ -229,12 +232,28 @@ class TetrisGym:
         empty_rows = np.zeros((num_completed, self.width))
         self.board = np.concatenate((empty_rows, self.board), axis=0)
 
-        score = 0
-        if num_completed == 4:
-            score = 800
+        rows_score = 0
+
+        num_completed /= 4 # Reward part 1.
+
+        # Number of lines occupied.
+        occupied_lines_count = 0
+        for row in self.board:
+            for block in row:
+                if block == 2:
+                    occupied_lines_count += 1
+                    break
+
+        occupied_lines_count /= 20 # Reward part 2.
+        occupied_lines_count = -occupied_lines_count
+        inaction_reward = 0 # Reward part 3
+        if action != Move.Down:
+            inaction_reward = 0.1
         else:
-            score = num_completed * 100
-        self.score += score
+            inaction_reward = -0.5
+
+        score = (num_completed + occupied_lines_count + inaction_reward) / 3
+        self.score += rows_score
         return score
 
     def remove_active_piece(self):

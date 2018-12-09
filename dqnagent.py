@@ -6,15 +6,17 @@ from keras.models import Sequential
 from keras.layers import Dense
 from keras.optimizers import Adam
 
+import matplotlib.pyplot as plt
+
 class DQN:
     def __init__(self):
         self.memory = deque(maxlen=1000)
         self.action_size = 4
         self.state_size = 200
-        self.gamma = 0.95
+        self.gamma = 0.6
         self.epsilon = 1.0
         self.epsilon_min = 0.01
-        self.epsilon_decay = 0.997
+        self.epsilon_decay = 0.999
         self.learning_rate = 0.001
         self.model = self._build_model()
 
@@ -74,8 +76,9 @@ gym = TetrisGym()
 batch_size = 64
 finished = False
 agent = DQN()
+scores = []
 
-for episode in range(1000):
+for episode in range(10000):
     gym = TetrisGym()
     state = gym.reset_game()
     runtime = 0
@@ -90,10 +93,16 @@ for episode in range(1000):
         if done:
             gym.render()
             print("episode: {}/{}, score: {}, e: {:.2}"
-                  .format(episode, 1000, runtime, agent.epsilon))
+                  .format(episode, 10000, runtime, agent.epsilon))
+            scores.append(runtime)
             break
         else:
             runtime += 1
     if len(agent.memory) > batch_size:
         agent.replay(batch_size)
 
+plt.plot(scores)
+plt.ylabel('Steps Survived')
+plt.xlabel('Episode')
+plt.show()
+print ("done!")
