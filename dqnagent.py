@@ -9,6 +9,7 @@ from keras.optimizers import Adam
 import matplotlib.pyplot as plt
 import os
 import random
+import time
 
 
 def cls():
@@ -41,7 +42,7 @@ class DQN:
                          activation='relu',
                          input_shape=(TETRIS_HEIGHT, TETRIS_WIDTH, 1)))
         model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
-        model.add(Conv2D(64, (3, 3), activation='relu'))
+        model.add(Conv2D(64, (2, 2), activation='relu'))
         model.add(MaxPooling2D(pool_size=(2, 2)))
         model.add(Flatten())
         model.add(Dense(1000, activation='relu'))
@@ -108,10 +109,9 @@ for episode in range(2000):
     runtime = 0
     while not gym.game_over:
         action = agent.act(current_state)
-        #next_state, reward, done = gym.update(agent.integer_to_action(action))
         update, current_state, done = gym.update(agent.integer_to_action(action))
-        #cls()
-        #gym.render()
+        gym.render()
+        time.sleep(0.01)
 
         if update is None:
             pass

@@ -1,9 +1,25 @@
 import numpy as np
 import random
 from enum import Enum
+import sys, pygame
+pygame.init()
 
-TETRIS_HEIGHT=10
+TETRIS_HEIGHT=20
 TETRIS_WIDTH=10
+
+size = width, height = 150 + (25 * TETRIS_WIDTH), TETRIS_HEIGHT * 25
+black = 0, 0, 0
+font = pygame.font.SysFont('Consolas', 18)
+font_bigger = pygame.font.SysFont('Consolas', 30)
+
+screen = pygame.display.set_mode(size)
+pygame.display.set_caption('Self-Learning Tetris')
+solid_piece = pygame.image.load("solid.png")
+moving_piece = pygame.image.load("moving.png")
+blank_piece = pygame.image.load("blank.png")
+
+
+
 
 class Move(Enum):
     Down = 0
@@ -140,6 +156,9 @@ class TetrisGym:
         self.reset_game()
         self.piece = Piece(self.choose_piece())
         self.journey_buffer = []
+        self.empty_block = 0
+        self.solid_block = 1
+        self.moving_block = -1
 
     def reset_game(self):
         """ Set up for a new iteration of the game. """
@@ -176,9 +195,9 @@ class TetrisGym:
             elif y >= self.height:
                 return 2
             # Check to see if we've intersected with another block.
-            elif self.board[y][x] == 2 and y < 4:
+            elif self.board[y][x] == self.solid_block and y < 4:
                 return 3
-            elif self.board[y][x] == 2:
+            elif self.board[y][x] == self.solid_block:
                 return 2
         return 0
 
@@ -202,9 +221,9 @@ class TetrisGym:
         piece_landed = False
         if result == 0:
             self.piece.shift(Move.Down)
-            self.draw_piece()
+            self.draw_piece(self.moving_block)
         if result == 2:
-            self.draw_piece(2)
+            self.draw_piece(self.solid_block)
             reward = self.evaluate_board(Move.Down)
             piece_landed = True
             self.piece = Piece(self.choose_piece())
@@ -273,7 +292,7 @@ class TetrisGym:
         for rows in self.board:
             occupied_row = False
             for block in rows:
-                if block == 2:
+                if block == self.solid_block:
                     occupied_blocks += 1
                     occupied_row = True
             if occupied_row:
@@ -288,33 +307,52 @@ class TetrisGym:
         for i in range(len(self.board)):
             row = self.board[i]
             for j in range(len(row)):
-                if row[j] == 1:
-                    row[j] = 0
+                if row[j] == self.moving_block:
+                    row[j] = self.empty_block
 
     def draw_piece(self, blocktype=1):
         """ We'll want to 'undraw' the piece to move it. We also might want to make it permanent.
             Set the piece to 0 to blank it, 1 to draw it active, 2 to draw it permanent. """
         for block in self.piece.get_position():
             y, x = block
-            if self.board[y][x] == 2:
+            if self.board[y][x] == self.solid_block:
                 print ("!")
             self.board[y][x] = blocktype
 
     def render(self):
+        screen.fill(black)
+        row_i = 0
         for row in self.board:
             line = ""
+            col_i = 0
             for block in row:
                 piece = ""
-                if block == 0:
+                if block == self.empty_block:
                     piece = "[_]"
-                elif block == 1:
+                    screen.blit(blank_piece, (col_i * 25, row_i * 25))
+                elif block == self.moving_block:
                     piece = "[X]"
-                elif block == 2:
+                    screen.blit(moving_piece, (col_i * 25, row_i * 25))
+                elif block == self.solid_block:
                     piece = "[#]"
+                    screen.blit(solid_piece, (col_i * 25, row_i * 25))
                 else:
                     raise Exception("{} is an invalid piece type.".format(block))
                 line = line + piece
+                col_i += 1
             print(line)
+            row_i += 1
         print ("Step {} - Score {} - Shape - {}".format(self.steps, self.score, self.piece.type))
+        textsurface = font.render('Score {}'.format(self.score), False, (255, 255, 255))
+        screen.blit(textsurface, (10 + TETRIS_WIDTH * 25, 10))
+        textsurface = font.render('Step {}'.format(self.steps), False, (255, 255, 255))
+        screen.blit(textsurface, (10 + TETRIS_WIDTH * 25, 40))
+        textsurface = font.render('Shape {}'.format(self.piece.type), False, (255, 255, 255))
+        screen.blit(textsurface, (10 + TETRIS_WIDTH * 25, 70))
         if self.game_over:
-            print ("GAME OVER")
+            textsurface = font_bigger.render('GAME OVER'.format(self.piece.type), False, (255, 255, 255))
+            screen.blit(textsurface, (110, 130))
+            textsurface = font_bigger.render('Retraining...'.format(self.piece.type), False, (255, 255, 255))
+            screen.blit(textsurface, (100, 170))
+
+        pygame.display.flip()
