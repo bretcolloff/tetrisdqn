@@ -1,6 +1,6 @@
 import numpy as np
 import random
-from tetrisgym import Move, TetrisGym
+from tetrisgym import Move, TetrisGym, TETRIS_HEIGHT, TETRIS_WIDTH
 from collections import deque
 from keras.models import Sequential
 from keras.layers import Dense, MaxPooling2D, Conv2D, Flatten
@@ -16,7 +16,7 @@ def cls():
 
 class DQN:
     def __init__(self):
-        self.memory = deque(maxlen=1000)
+        self.memory = deque(maxlen=10000)
         self.action_size = 4
         self.state_size = 200
         self.gamma = 0.95
@@ -39,14 +39,14 @@ class DQN:
         model = Sequential()
         model.add(Conv2D(32, kernel_size=(3, 3), strides=(1, 1),
                          activation='relu',
-                         input_shape=(20, 10, 1)))
+                         input_shape=(TETRIS_HEIGHT, TETRIS_WIDTH, 1)))
         model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
         model.add(Conv2D(64, (3, 3), activation='relu'))
         model.add(MaxPooling2D(pool_size=(2, 2)))
         model.add(Flatten())
         model.add(Dense(1000, activation='relu'))
         model.add(Dense(self.action_size, activation='softmax'))
-        adam = Adam(lr=1e-6)
+        adam = Adam(lr=self.learning_rate)
         model.compile(loss='mse', optimizer=adam)
 
         return model
@@ -57,7 +57,7 @@ class DQN:
     def act(self, state):
         if np.random.rand() <= self.epsilon:
             return random.randrange(self.action_size)
-        act_values = self.model.predict(state.reshape((1, 20, 10, 1)))
+        act_values = self.model.predict(state.reshape((1, TETRIS_HEIGHT, TETRIS_WIDTH, 1)))
         return np.argmax(act_values[0])
 
     def integer_to_action(self, input):
@@ -76,12 +76,16 @@ class DQN:
             next_state = next_state
             state = state
             target = reward
+            old_q = self.model.predict(state.reshape((1, TETRIS_HEIGHT, TETRIS_WIDTH, 1)))
+            new_q = self.model.predict(next_state.reshape((1, TETRIS_HEIGHT, TETRIS_WIDTH, 1)))
+
             if not done:
-                target = (reward + self.gamma *
-                          np.amax(self.model.predict(next_state.reshape((1, 20, 10, 1)))[0]))
-            target_f = self.model.predict(state.reshape((1, 20, 10, 1)))
-            target_f[0][int(action)] = target
-            self.model.fit(state.reshape((1, 20, 10, 1)), target_f, epochs=1, verbose=0)
+                scaled_old = (1 - self.gamma) * old_q[0][int(action)]
+                scaled_new = self.gamma * (reward + new_q[0][int(action)])
+                target = scaled_old + scaled_new
+
+                old_q[0][int(action)] = target
+            self.model.fit(state.reshape((1, TETRIS_HEIGHT, TETRIS_WIDTH, 1)), old_q, epochs=1, verbose=0)
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
 

@@ -2,6 +2,9 @@ import numpy as np
 import random
 from enum import Enum
 
+TETRIS_HEIGHT=10
+TETRIS_WIDTH=10
+
 class Move(Enum):
     Down = 0
     Left = 1
@@ -128,8 +131,8 @@ class TetrisGym:
         self.pieces = ['I', 'J', 'L', 'O', 'S', 'T', 'Z']
 
         # Standard tetris board size.
-        self.width = 10
-        self.height = 20
+        self.width = TETRIS_WIDTH
+        self.height = TETRIS_HEIGHT
         self.score = 0
         self.steps = 0
         self.game_over = False
