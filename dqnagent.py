@@ -7,13 +7,19 @@ from keras.layers import Dense
 from keras.optimizers import Adam
 
 import matplotlib.pyplot as plt
+import os
+import random
+
+
+def cls():
+    os.system('cls' if os.name == 'nt' else 'clear')
 
 class DQN:
     def __init__(self):
         self.memory = deque(maxlen=1000)
         self.action_size = 4
         self.state_size = 200
-        self.gamma = 0.6
+        self.gamma = 0.95
         self.epsilon = 1.0
         self.epsilon_min = 0.01
         self.epsilon_decay = 0.999
@@ -60,7 +66,7 @@ class DQN:
                 target = (reward + self.gamma *
                           np.amax(self.model.predict(next_state)[0]))
             target_f = self.model.predict(state)
-            target_f[0][action] = target
+            target_f[0][int(action)] = target
             self.model.fit(state, target_f, epochs=1, verbose=0)
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
@@ -80,16 +86,24 @@ scores = []
 
 for episode in range(2000):
     gym = TetrisGym()
-    state = gym.reset_game()
+    current_state = gym.reset_game()
     runtime = 0
     while not gym.game_over:
-        action = agent.act(state)
-        next_state, reward, done = gym.update(agent.integer_to_action(action))
-        reward = reward + runtime if not done else -10
-        next_state = next_state.reshape(-1)
-        state = state.reshape(-1)
-        agent.remember(state, action, reward, next_state, done)
-        state = next_state
+        action = agent.act(current_state)
+        #next_state, reward, done = gym.update(agent.integer_to_action(action))
+        update, current_state, done = gym.update(agent.integer_to_action(action))
+        #cls()
+        #gym.render()
+
+        if update is None:
+            pass
+        else:
+            for state, action, reward, next_state in update:
+                reward = reward
+                next_state = next_state.reshape(-1)
+                state = state.reshape(-1)
+                agent.remember(state, action, reward, next_state, False)
+                state = next_state
         if done:
             gym.render()
             print("episode: {}/{}, score: {}, e: {:.2}"

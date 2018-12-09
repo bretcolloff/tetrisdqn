@@ -3,10 +3,13 @@ import random
 from enum import Enum
 
 class Move(Enum):
-    Left = 0
-    Right = 1
-    Down = 2
+    Down = 0
+    Left = 1
+    Right = 2
     Rotate = 3
+
+    def __int__(self):
+        return self.value
 
 piece_positions_map = {}
 piece_positions_map["I"] = [
@@ -133,6 +136,7 @@ class TetrisGym:
         self.board = None
         self.reset_game()
         self.piece = Piece(self.choose_piece())
+        self.journey_buffer = []
 
     def reset_game(self):
         """ Set up for a new iteration of the game. """
@@ -175,11 +179,12 @@ class TetrisGym:
                 return 2
         return 0
 
-    def update(self, action=None):
+    def update(self, action=Move.Down):
         #next_state, reward, done, _ = gym.update(action)
         self.remove_active_piece()
+        pre_action_state = np.copy(self.board)
 
-        if action is not None:
+        if action is not Move.Down:
             result = self.evalulate_piece_move(action)
             if result == 0:
                 self.piece.shift(action)
@@ -189,21 +194,46 @@ class TetrisGym:
             # Do we need to delete any rows?
             pass
 
-        move = Move.Down
-        result = self.evalulate_piece_move(move)
+        result = self.evalulate_piece_move(Move.Down)
         reward = 0
+        piece_landed = False
         if result == 0:
-            self.piece.shift(move)
+            self.piece.shift(Move.Down)
             self.draw_piece()
         if result == 2:
             self.draw_piece(2)
-            reward = self.evaluate_board(move)
+            reward = self.evaluate_board(Move.Down)
+            piece_landed = True
             self.piece = Piece(self.choose_piece())
         if result == 3:
             self.game_over = True
 
+        next_state = np.copy(self.board)
+        self.journey_buffer.append((pre_action_state, action, reward, next_state))
+
         self.steps = self.steps + 1
-        return self.board, reward, self.game_over
+        if piece_landed:
+
+            # We want to look at all the moves between the start of this piece and it landing, and evaluate it's path.
+            # pre_action_state, action, reward, next_state
+            experiences = self.walk_journey()
+            self.journey_buffer = []
+            return experiences, next_state, self.game_over
+        else:
+            return None, next_state, self.game_over
+
+    def walk_journey(self):
+        num_steps = len(self.journey_buffer)
+        _, _, reward, _ = self.journey_buffer[-1]
+        reward_step = reward / num_steps
+        output_experiences = []
+
+        for i in range(num_steps):
+            experience = self.journey_buffer[i]
+            state, action, exp_reward, next_state = experience
+            experience = (state, action, reward_step * i+1, next_state)
+            output_experiences.append(experience)
+        return output_experiences
 
     def evaluate_board(self, action):
         completed_lines = []
@@ -248,6 +278,7 @@ class TetrisGym:
 
         total_blocks_in_stack = occupied_rows * self.width
         ratio = occupied_blocks / total_blocks_in_stack
+        ratio = ratio - 0.5
         return ratio
 
     def remove_active_piece(self):
