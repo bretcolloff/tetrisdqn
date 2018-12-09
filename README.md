@@ -1,6 +1,8 @@
 # tetrisdqn
 A self-learning Tetris agent.
 
+# WIP
+
 08/12/18 - 5PM
 Start the project. We know we need a couple of things. The agent that learns, a gym to play in, and a way to test the gym as a human.
 We create the basic classes.
