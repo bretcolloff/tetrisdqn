@@ -78,7 +78,7 @@ finished = False
 agent = DQN()
 scores = []
 
-for episode in range(10000):
+for episode in range(2000):
     gym = TetrisGym()
     state = gym.reset_game()
     runtime = 0
@@ -93,7 +93,7 @@ for episode in range(10000):
         if done:
             gym.render()
             print("episode: {}/{}, score: {}, e: {:.2}"
-                  .format(episode, 10000, runtime, agent.epsilon))
+                  .format(episode, 2000, runtime, agent.epsilon))
             scores.append(runtime)
             break
         else:

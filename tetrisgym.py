@@ -233,28 +233,22 @@ class TetrisGym:
         self.board = np.concatenate((empty_rows, self.board), axis=0)
 
         rows_score = 0
-
-        num_completed /= 4 # Reward part 1.
-
-        # Number of lines occupied.
-        occupied_lines_count = 0
-        for row in self.board:
-            for block in row:
-                if block == 2:
-                    occupied_lines_count += 1
-                    break
-
-        occupied_lines_count /= 20 # Reward part 2.
-        occupied_lines_count = -occupied_lines_count
-        inaction_reward = 0 # Reward part 3
-        if action != Move.Down:
-            inaction_reward = 0.1
-        else:
-            inaction_reward = -0.5
-
-        score = (num_completed + occupied_lines_count + inaction_reward) / 3
         self.score += rows_score
-        return score
+
+        occupied_rows = 0
+        occupied_blocks = 0
+        for rows in self.board:
+            occupied_row = False
+            for block in rows:
+                if block == 2:
+                    occupied_blocks += 1
+                    occupied_row = True
+            if occupied_row:
+                occupied_rows += 1
+
+        total_blocks_in_stack = occupied_rows * self.width
+        ratio = occupied_blocks / total_blocks_in_stack
+        return ratio
 
     def remove_active_piece(self):
         for i in range(len(self.board)):
