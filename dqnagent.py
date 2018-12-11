@@ -14,14 +14,14 @@ class DQN:
         self.memory = deque(maxlen=10000)
         self.action_size = 4
         self.state_size = 200
-        self.gamma = 0.95
-        self.epsilon = 1.0
-        self.epsilon_min = 0.01
-        self.epsilon_decay = 0.999
+        self.improvement_rate = 0.95
+        self.randomness = 1.0
+        self.randomness_min = 0.01
+        self.randomness_decay = 0.999
         self.learning_rate = 0.001
-        self.model = self._build_model()
+        self.model = self.compile_model()
 
-    def _build_model(self):
+    def compile_model(self):
         # Neural Net for Deep-Q learning Model
         model = Sequential()
         model.add(Conv2D(32, kernel_size=(3, 3), strides=(1, 1),
@@ -62,26 +62,18 @@ class DQN:
         for state, action, reward, next_state, done in minibatch:
             next_state = next_state
             state = state
-            target = reward
             old_q = self.model.predict(state.reshape((1, TETRIS_HEIGHT, TETRIS_WIDTH, 1)))
             new_q = self.model.predict(next_state.reshape((1, TETRIS_HEIGHT, TETRIS_WIDTH, 1)))
 
             if not done:
-                scaled_old = (1 - self.gamma) * old_q[0][int(action)]
-                scaled_new = self.gamma * (reward + new_q[0][int(action)])
+                scaled_old = (1 - self.improvement_rate) * old_q[0][int(action)]
+                scaled_new = self.improvement_rate * (reward + new_q[0][int(action)])
                 target = scaled_old + scaled_new
 
                 old_q[0][int(action)] = target
             self.model.fit(state.reshape((1, TETRIS_HEIGHT, TETRIS_WIDTH, 1)), old_q, epochs=1, verbose=0)
-        if self.epsilon > self.epsilon_min:
-            self.epsilon *= self.epsilon_decay
-
-    def load(self, name):
-        self.model.load_weights(name)
-
-    def save(self, name):
-        self.model.save_weights(name)
-
+        if self.randomness > self.randomness_min:
+            self.randomness *= self.randomness_decay
 
 gym = TetrisGym()
 batch_size = 64
