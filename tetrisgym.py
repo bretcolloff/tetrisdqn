@@ -1,7 +1,8 @@
 import numpy as np
 import random
 from enum import Enum
-import sys, pygame
+import pygame
+
 pygame.init()
 
 TETRIS_HEIGHT=20
@@ -14,9 +15,9 @@ font_bigger = pygame.font.SysFont('Consolas', 30)
 
 screen = pygame.display.set_mode(size)
 pygame.display.set_caption('Self-Learning Tetris')
-solid_piece = pygame.image.load("solid.png")
-moving_piece = pygame.image.load("moving.png")
-blank_piece = pygame.image.load("blank.png")
+solid_piece = pygame.image.load("sprites/solid.png")
+moving_piece = pygame.image.load("sprites/moving.png")
+blank_piece = pygame.image.load("sprites/blank.png")
 
 
 
@@ -202,7 +203,6 @@ class TetrisGym:
         return 0
 
     def update(self, action=Move.Down):
-        #next_state, reward, done, _ = gym.update(action)
         self.remove_active_piece()
         pre_action_state = np.copy(self.board)
 

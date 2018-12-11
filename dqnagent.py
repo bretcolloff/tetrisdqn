@@ -1,5 +1,4 @@
 import numpy as np
-import random
 from tetrisgym import Move, TetrisGym, TETRIS_HEIGHT, TETRIS_WIDTH
 from collections import deque
 from keras.models import Sequential
@@ -7,13 +6,8 @@ from keras.layers import Dense, MaxPooling2D, Conv2D, Flatten
 from keras.optimizers import Adam
 
 import matplotlib.pyplot as plt
-import os
 import random
 import time
-
-
-def cls():
-    os.system('cls' if os.name == 'nt' else 'clear')
 
 class DQN:
     def __init__(self):
@@ -29,14 +23,6 @@ class DQN:
 
     def _build_model(self):
         # Neural Net for Deep-Q learning Model
-        #model = Sequential()
-        #model.add(Dense(30, input_dim=self.state_size, activation='relu'))
-        #model.add(Dense(30, activation='relu'))
-        #model.add(Dense(30, activation='relu'))
-        #model.add(Dense(self.action_size, activation='linear'))
-        #model.compile(loss='mse',
-        #              optimizer=Adam(lr=self.learning_rate))
-
         model = Sequential()
         model.add(Conv2D(32, kernel_size=(3, 3), strides=(1, 1),
                          activation='relu',
