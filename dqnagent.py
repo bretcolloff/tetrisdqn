@@ -10,6 +10,9 @@ import random
 import time
 
 class DQN:
+    """
+    An agent that explores the game space and learns to play.
+    """
     def __init__(self):
         self.memory = deque(maxlen=10000)
         self.action_size = 4
@@ -22,7 +25,7 @@ class DQN:
         self.model = self.compile_model()
 
     def compile_model(self):
-        # Neural Net for Deep-Q learning Model
+        """ Returns a compiled network """
         model = Sequential()
         model.add(Conv2D(32, kernel_size=(3, 3), strides=(1, 1),
                          activation='relu',
@@ -38,16 +41,15 @@ class DQN:
 
         return model
 
-    def remember(self, state, action, reward, next_state, done):
-        self.memory.append((state, action, reward, next_state, done))
-
     def act(self, state):
-        if np.random.rand() <= self.epsilon:
+        """ Predicts an action on a state, or acts randomly depending on state exploration. """
+        if np.random.rand() <= self.randomness:
             return random.randrange(self.action_size)
         act_values = self.model.predict(state.reshape((1, TETRIS_HEIGHT, TETRIS_WIDTH, 1)))
         return np.argmax(act_values[0])
 
     def integer_to_action(self, input):
+        """ Translate the generated action from an integer to an action the game understands. """
         if input == 0:
             return Move.Down
         elif input == 1:
@@ -57,7 +59,12 @@ class DQN:
         elif input == 3:
             return Move.Rotate
 
-    def replay(self, batch_size):
+    def store_experience(self, state, action, reward, next_state, done):
+        """ Store the experience for replay. """
+        self.memory.append((state, action, reward, next_state, done))
+
+    def replay_experiences(self, batch_size):
+        """ Train on a batch of stored experiences. """
         minibatch = random.sample(self.memory, batch_size)
         for state, action, reward, next_state, done in minibatch:
             next_state = next_state
@@ -80,8 +87,9 @@ batch_size = 64
 finished = False
 agent = DQN()
 scores = []
+iterations = 2000
 
-for episode in range(2000):
+for game_iteration in range(iterations):
     gym = TetrisGym()
     current_state = gym.reset_game()
     runtime = 0
@@ -98,18 +106,18 @@ for episode in range(2000):
                 reward = reward
                 next_state = next_state
                 state = state
-                agent.remember(state, action, reward, next_state, False)
+                agent.store_experience(state, action, reward, next_state, False)
                 state = next_state
         if done:
             gym.render()
-            print("episode: {}/{}, score: {}, e: {:.2}"
-                  .format(episode, 2000, runtime, agent.epsilon))
+            print("{}/{}, score: {}, randomness: {:.2}"
+                  .format(game_iteration, iterations, runtime, agent.randomness))
             scores.append(runtime)
             break
         else:
             runtime += 1
     if len(agent.memory) > batch_size:
-        agent.replay(batch_size)
+        agent.replay_experiences(batch_size)
 
 plt.plot(scores)
 plt.ylabel('Steps Survived')
