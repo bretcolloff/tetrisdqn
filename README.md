@@ -9,3 +9,5 @@ Initially I took the standard approach of using just the rewards from the game, 
 The current approach at the time of writing uses a combination of the height of the populated area, the density and some other calculations as a reward. It also waits until the block has landed before evaluating the success of the placement, and populating the experience with a weaker or stronger reward depending on how close the block is to being placed in that particular space.
 
 I intent to make further adjustments so that the bot can be pre-trained by observing player behaviour for some amount of time before starting it's random exploration.
+
+![Screenshot](https://raw.githubusercontent.com/bretcolloff/tetrisdqn/master/screenshot.png "Screenshot")
