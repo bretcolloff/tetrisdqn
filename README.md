@@ -11,5 +11,5 @@ The current approach at the time of writing uses a combination of the height of 
 I intent to make further adjustments so that the bot can be pre-trained by observing player behaviour for some amount of time before starting it's random exploration.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/bretcolloff/tetrisdqn/master/screenshot.png">
+  <img src="https://raw.githubusercontent.com/bretcolloff/tetrisdqn/master/screenshot.png" alt="screenshot" />
 </p>
